@@ -1,0 +1,11 @@
+# Core dependencies
+# No external dependencies required for data models and persistence (using built-in sqlite3)
+
+# Development dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Future dependencies for Monte Carlo simulations and matrix operations
+# numpy>=1.24.0
+# scipy>=1.10.0
+
