@@ -3,7 +3,7 @@ Unit tests for the DecisionService component.
 
 This module tests a service layer that manages CRUD operations for Options,
 Criteria, and Scores within the context of a Decision. The service depends
-on Database and Repository components via dependency injection.
+on Repository components via dependency injection.
 """
 
 import pytest
@@ -11,7 +11,6 @@ from unittest.mock import Mock, MagicMock, patch, call
 from datetime import datetime
 
 from src.decision_making.models import Decision, Option, Criteria, Score
-from src.decision_making.persistence import Database
 from src.decision_making.repositories import (
     OptionRepository,
     CriteriaRepository,
@@ -26,7 +25,6 @@ class TestDecisionServiceInitialization:
         """Test that service initializes with a Decision model."""
         # Arrange
         decision = Decision(name="Choose a car", description="Buy a new car")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -35,7 +33,6 @@ class TestDecisionServiceInitialization:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
@@ -50,7 +47,6 @@ class TestDecisionServiceInitialization:
         """Test that service stores injected dependencies."""
         # Arrange
         decision = Decision(name="Choose a car")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -59,14 +55,12 @@ class TestDecisionServiceInitialization:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
         )
         
         # Assert
-        assert service.database == mock_db
         assert service.option_repository == mock_option_repo
         assert service.criteria_repository == mock_criteria_repo
         assert service.score_repository == mock_score_repo
@@ -74,7 +68,6 @@ class TestDecisionServiceInitialization:
     def test_service_requires_decision(self):
         """Test that service requires a Decision instance."""
         # Arrange
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -84,26 +77,6 @@ class TestDecisionServiceInitialization:
         with pytest.raises((TypeError, ValueError)):
             service = DecisionService(
                 decision=None,
-                database=mock_db,
-                option_repository=mock_option_repo,
-                criteria_repository=mock_criteria_repo,
-                score_repository=mock_score_repo
-            )
-    
-    def test_service_requires_database(self):
-        """Test that service requires a Database instance."""
-        # Arrange
-        decision = Decision(name="Choose a car")
-        mock_option_repo = Mock(spec=OptionRepository)
-        mock_criteria_repo = Mock(spec=CriteriaRepository)
-        mock_score_repo = Mock(spec=ScoreRepository)
-        
-        # Act & Assert
-        from src.decision_making.service import DecisionService
-        with pytest.raises((TypeError, ValueError)):
-            service = DecisionService(
-                decision=decision,
-                database=None,
                 option_repository=mock_option_repo,
                 criteria_repository=mock_criteria_repo,
                 score_repository=mock_score_repo
@@ -117,7 +90,6 @@ class TestOptionCRUD:
     def service_setup(self):
         """Setup service with mocked dependencies."""
         decision = Decision(name="Choose a car", id="decision-123")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -125,7 +97,6 @@ class TestOptionCRUD:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
@@ -136,8 +107,7 @@ class TestOptionCRUD:
             'decision': decision,
             'option_repo': mock_option_repo,
             'criteria_repo': mock_criteria_repo,
-            'score_repo': mock_score_repo,
-            'db': mock_db
+            'score_repo': mock_score_repo
         }
     
     def test_create_option_with_name_only(self, service_setup):
@@ -465,7 +435,6 @@ class TestCriteriaCRUD:
     def service_setup(self):
         """Setup service with mocked dependencies."""
         decision = Decision(name="Choose a car", id="decision-123")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -473,7 +442,6 @@ class TestCriteriaCRUD:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
@@ -484,8 +452,7 @@ class TestCriteriaCRUD:
             'decision': decision,
             'option_repo': mock_option_repo,
             'criteria_repo': mock_criteria_repo,
-            'score_repo': mock_score_repo,
-            'db': mock_db
+            'score_repo': mock_score_repo
         }
     
     def test_create_criteria_with_name_only(self, service_setup):
@@ -914,7 +881,6 @@ class TestScoreCRUD:
     def service_setup(self):
         """Setup service with mocked dependencies."""
         decision = Decision(name="Choose a car", id="decision-123")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -922,7 +888,6 @@ class TestScoreCRUD:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
@@ -933,8 +898,7 @@ class TestScoreCRUD:
             'decision': decision,
             'option_repo': mock_option_repo,
             'criteria_repo': mock_criteria_repo,
-            'score_repo': mock_score_repo,
-            'db': mock_db
+            'score_repo': mock_score_repo
         }
     
     def test_create_score_with_required_fields(self, service_setup):
@@ -1377,7 +1341,6 @@ class TestServiceIntegrationScenarios:
     def service_setup(self):
         """Setup service with mocked dependencies."""
         decision = Decision(name="Choose a car", id="decision-123")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -1385,7 +1348,6 @@ class TestServiceIntegrationScenarios:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
@@ -1396,8 +1358,7 @@ class TestServiceIntegrationScenarios:
             'decision': decision,
             'option_repo': mock_option_repo,
             'criteria_repo': mock_criteria_repo,
-            'score_repo': mock_score_repo,
-            'db': mock_db
+            'score_repo': mock_score_repo
         }
     
     def test_create_complete_decision_matrix(self, service_setup):
@@ -1608,7 +1569,6 @@ class TestServiceErrorHandling:
     def service_setup(self):
         """Setup service with mocked dependencies."""
         decision = Decision(name="Choose a car", id="decision-123")
-        mock_db = Mock(spec=Database)
         mock_option_repo = Mock(spec=OptionRepository)
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
@@ -1616,7 +1576,6 @@ class TestServiceErrorHandling:
         from src.decision_making.service import DecisionService
         service = DecisionService(
             decision=decision,
-            database=mock_db,
             option_repository=mock_option_repo,
             criteria_repository=mock_criteria_repo,
             score_repository=mock_score_repo
@@ -1627,8 +1586,7 @@ class TestServiceErrorHandling:
             'decision': decision,
             'option_repo': mock_option_repo,
             'criteria_repo': mock_criteria_repo,
-            'score_repo': mock_score_repo,
-            'db': mock_db
+            'score_repo': mock_score_repo
         }
     
     def test_create_score_with_invalid_option_raises_error(self, service_setup):
