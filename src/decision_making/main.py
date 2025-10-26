@@ -7,19 +7,11 @@ This module provides example usage of the decision-making tool.
 from .models import Decision, Option, Criteria, Score
 from .persistence import Database
 from .repositories import DecisionRepository, OptionRepository, CriteriaRepository, ScoreRepository
+from .service import DecisionService
 
 
 def example_usage():
-    """
-    Example usage of the decision-making tool.
-    
-    This function demonstrates how to:
-    1. Create a decision
-    2. Add options to the decision
-    3. Add criteria for evaluating options
-    4. Score each option against each criteria
-    5. Store everything in the database
-    """
+    """Example usage demonstrating decision creation, scoring, and weighted calculation."""
     db = Database()
     decision_repo = DecisionRepository(db)
     option_repo = OptionRepository(db)
@@ -32,81 +24,45 @@ def example_usage():
     )
     decision_repo.create(decision)
     
-    options = [
-        Option(
-            decision_id=decision.id,
-            name="Python",
-            description="High-level, versatile language with great frameworks"
-        ),
-        Option(
-            decision_id=decision.id,
-            name="JavaScript/TypeScript",
-            description="Full-stack capability with Node.js and modern frameworks"
-        ),
-        Option(
-            decision_id=decision.id,
-            name="Go",
-            description="Fast, compiled language with excellent concurrency support"
-        ),
-    ]
-    for option in options:
-        option_repo.create(option)
+    service = DecisionService(decision, option_repo, criteria_repo, score_repo)
     
-    criteria_list = [
-        Criteria(
-            decision_id=decision.id,
-            name="Developer Productivity",
-            weight=0.9,
-            description="How quickly can developers write and maintain code"
-        ),
-        Criteria(
-            decision_id=decision.id,
-            name="Performance",
-            weight=0.7,
-            description="Runtime performance and resource efficiency"
-        ),
-        Criteria(
-            decision_id=decision.id,
-            name="Community Support",
-            weight=0.8,
-            description="Size and activity of the developer community"
-        ),
-        Criteria(
-            decision_id=decision.id,
-            name="Learning Curve",
-            weight=0.6,
-            description="How easy it is for new developers to learn"
-        ),
-    ]
-    for criteria in criteria_list:
-        criteria_repo.create(criteria)
+    service.create_option("Python", "High-level, versatile language with great frameworks")
+    service.create_option("JavaScript/TypeScript", "Full-stack capability with Node.js and modern frameworks")
+    service.create_option("Go", "Fast, compiled language with excellent concurrency support")
+    
+    service.create_criteria("Developer Productivity", "How quickly can developers write and maintain code", 0.9)
+    service.create_criteria("Performance", "Runtime performance and resource efficiency", 0.7)
+    service.create_criteria("Community Support", "Size and activity of the developer community", 0.8)
+    service.create_criteria("Learning Curve", "How easy it is for new developers to learn", 0.6)
+    
+    options = service.get_all_options()
+    criteria = service.get_all_criteria()
     
     scores_data = [
-        (options[0].id, criteria_list[0].id, 9.0, "Excellent productivity with clear syntax"),
-        (options[0].id, criteria_list[1].id, 6.5, "Good performance but slower than compiled languages"),
-        (options[0].id, criteria_list[2].id, 9.5, "Huge community and extensive libraries"),
-        (options[0].id, criteria_list[3].id, 8.5, "Easy to learn for beginners"),
-        
-        (options[1].id, criteria_list[0].id, 8.0, "Good productivity with modern frameworks"),
-        (options[1].id, criteria_list[1].id, 7.0, "Decent performance with V8 engine"),
-        (options[1].id, criteria_list[2].id, 9.0, "Very large community, especially in web dev"),
-        (options[1].id, criteria_list[3].id, 7.0, "Moderate learning curve with async patterns"),
-        
-        (options[2].id, criteria_list[0].id, 7.0, "Simple but more verbose than Python"),
-        (options[2].id, criteria_list[1].id, 9.5, "Excellent performance and efficiency"),
-        (options[2].id, criteria_list[2].id, 7.5, "Growing community, great for cloud/backend"),
-        (options[2].id, criteria_list[3].id, 7.5, "Simple to learn but concurrent patterns take time"),
+        (0, 0, 9.0, "Excellent productivity with clear syntax"),
+        (0, 1, 6.5, "Good performance but slower than compiled languages"),
+        (0, 2, 9.5, "Huge community and extensive libraries"),
+        (0, 3, 8.5, "Easy to learn for beginners"),
+        (1, 0, 8.0, "Good productivity with modern frameworks"),
+        (1, 1, 7.0, "Decent performance with V8 engine"),
+        (1, 2, 9.0, "Very large community, especially in web dev"),
+        (1, 3, 7.0, "Moderate learning curve with async patterns"),
+        (2, 0, 7.0, "Simple but more verbose than Python"),
+        (2, 1, 9.5, "Excellent performance and efficiency"),
+        (2, 2, 7.5, "Growing community, great for cloud/backend"),
+        (2, 3, 7.5, "Simple to learn but concurrent patterns take time"),
     ]
     
-    for option_id, criteria_id, value, notes in scores_data:
-        score = Score(
-            option_id=option_id,
-            criteria_id=criteria_id,
-            value=value,
-            notes=notes
-        )
-        score_repo.create(score)
-        
+    for opt_idx, crit_idx, value, notes in scores_data:
+        service.create_score(options[opt_idx].id, criteria[crit_idx].id, value, notes)
+    
+    results = service.calculate_weighted_scores()
+    
+    print(f"\nDecision: {decision.name}")
+    print("=" * 60)
+    for rank, result in enumerate(results, 1):
+        print(f"{rank}. {result['option'].name}: {result['weighted_score']:.2f}")
+    
     db.close()
 
 
