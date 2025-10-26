@@ -1,5 +1,5 @@
 """
-Setup configuration for the decision-making tool.
+Setup configuration for the strange tool.
 """
 
 from setuptools import setup, find_packages
@@ -10,14 +10,14 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(
-    name="decision-making",
+    name="strange",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
-    description="A Python tool for decision making using Monte Carlo simulations and matrices",
+    author="João Wiciuk",
+    author_email="joaowiciuk@gmail.com",
+    description="A probabilistic Multi-Criteria Decision Analysis (MCDA) tool for decision makers.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/decision-making",
+    url="https://github.com/joaowiciuk/strange",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     classifiers=[
@@ -25,14 +25,13 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3.12",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
         # Core dependencies (currently none - using built-in sqlite3)
     ],
@@ -49,7 +48,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "decision-making=decision_making.main:example_usage",
+            "strange=strange.main:example_usage",
         ],
     },
 )

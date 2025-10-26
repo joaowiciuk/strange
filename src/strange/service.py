@@ -1,5 +1,5 @@
 """
-Service layer for managing decision-making operations.
+Service layer for managing decision operations.
 """
 
 from typing import Optional, List, Dict, Any

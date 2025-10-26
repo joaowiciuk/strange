@@ -10,8 +10,8 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch, call
 from datetime import datetime
 
-from src.decision_making.models import Decision, Option, Criteria, Score
-from src.decision_making.repositories import (
+from src.strange.models import Decision, Option, Criteria, Score
+from src.strange.repositories import (
     OptionRepository,
     CriteriaRepository,
     ScoreRepository
@@ -30,7 +30,7 @@ class TestDecisionServiceInitialization:
         mock_score_repo = Mock(spec=ScoreRepository)
         
         # Act
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -52,7 +52,7 @@ class TestDecisionServiceInitialization:
         mock_score_repo = Mock(spec=ScoreRepository)
         
         # Act
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -73,7 +73,7 @@ class TestDecisionServiceInitialization:
         mock_score_repo = Mock(spec=ScoreRepository)
         
         # Act & Assert
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         with pytest.raises((TypeError, ValueError)):
             service = DecisionService(
                 decision=None,
@@ -94,7 +94,7 @@ class TestOptionCRUD:
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
         
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -439,7 +439,7 @@ class TestCriteriaCRUD:
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
         
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -885,7 +885,7 @@ class TestScoreCRUD:
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
         
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -1345,7 +1345,7 @@ class TestServiceIntegrationScenarios:
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
         
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -1573,7 +1573,7 @@ class TestWeightedScoreCalculation:
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
         
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,
@@ -1867,7 +1867,7 @@ class TestServiceErrorHandling:
         mock_criteria_repo = Mock(spec=CriteriaRepository)
         mock_score_repo = Mock(spec=ScoreRepository)
         
-        from src.decision_making.service import DecisionService
+        from src.strange.service import DecisionService
         service = DecisionService(
             decision=decision,
             option_repository=mock_option_repo,

@@ -1,4 +1,4 @@
 """
-Tests package for decision-making tool.
+Tests package for strange tool.
 """
 

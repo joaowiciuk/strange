@@ -1,7 +1,7 @@
 """
-Main entry point for the decision-making tool.
+Main entry point for the strange tool.
 
-This module provides example usage of the decision-making tool.
+This module provides example usage of the strange tool.
 """
 
 from .models import Decision, Option, Criteria, Score

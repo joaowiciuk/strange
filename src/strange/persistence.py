@@ -1,5 +1,5 @@
 """
-Persistence layer for the decision-making tool using SQLite.
+Persistence layer for the strange tool using SQLite.
 
 This module provides database connection management and schema creation.
 """
@@ -12,7 +12,7 @@ from contextlib import contextmanager
 
 class Database:
     """
-    SQLite database manager for the decision-making tool.
+    SQLite database manager for the strange tool.
     
     Handles connection management, schema creation, and transaction handling.
     """
@@ -27,7 +27,7 @@ class Database:
         if db_path is None:
             # Use default path in user's home directory
             home = Path.home()
-            db_dir = home / '.decision-making'
+            db_dir = home / '.strange'
             db_dir.mkdir(exist_ok=True)
             db_path = str(db_dir / 'decisions.db')
         

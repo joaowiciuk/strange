@@ -7,9 +7,9 @@ import tempfile
 import os
 from pathlib import Path
 
-from src.decision_making.persistence import Database
-from src.decision_making.models import Decision, Option, Criteria, Score
-from src.decision_making.repositories import (
+from src.strange.persistence import Database
+from src.strange.models import Decision, Option, Criteria, Score
+from src.strange.repositories import (
     DecisionRepository,
     OptionRepository,
     CriteriaRepository,
@@ -35,7 +35,7 @@ class TestDatabase:
         """Test that database creates default path if none provided."""
         db = Database()
         assert db.db_path is not None
-        assert '.decision-making' in db.db_path
+        assert '.strange' in db.db_path
         db.close()
     
     def test_database_creates_custom_path(self, temp_db):

@@ -1,5 +1,5 @@
 """
-Data models for the decision-making tool.
+Data models for the strange tool.
 
 This module defines the core entities for decision-making:
 - Decision: The root entity representing a decision to be made

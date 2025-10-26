@@ -4,7 +4,7 @@ Unit tests for data models.
 
 import pytest
 from datetime import datetime
-from src.decision_making.models import Decision, Option, Criteria, Score
+from src.strange.models import Decision, Option, Criteria, Score
 
 
 class TestDecision:
