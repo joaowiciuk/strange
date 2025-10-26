@@ -1562,6 +1562,300 @@ class TestServiceIntegrationScenarios:
         assert all(c.decision_id == decision.id for c in created_criteria)
 
 
+class TestWeightedScoreCalculation:
+    """Test cases for weighted score calculation."""
+    
+    @pytest.fixture
+    def service_setup(self):
+        """Setup service with mocked dependencies."""
+        decision = Decision(name="Choose a car", id="decision-123")
+        mock_option_repo = Mock(spec=OptionRepository)
+        mock_criteria_repo = Mock(spec=CriteriaRepository)
+        mock_score_repo = Mock(spec=ScoreRepository)
+        
+        from src.decision_making.service import DecisionService
+        service = DecisionService(
+            decision=decision,
+            option_repository=mock_option_repo,
+            criteria_repository=mock_criteria_repo,
+            score_repository=mock_score_repo
+        )
+        
+        return {
+            'service': service,
+            'decision': decision,
+            'option_repo': mock_option_repo,
+            'criteria_repo': mock_criteria_repo,
+            'score_repo': mock_score_repo
+        }
+    
+    def test_calculate_weighted_scores_returns_sorted_results(self, service_setup):
+        """Test that weighted scores are calculated and sorted correctly."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        mock_score_repo = service_setup['score_repo']
+        
+        # Create test data: 3 options and 2 criteria
+        options = [
+            Option(decision_id=decision.id, name="Toyota Camry", id="option-1"),
+            Option(decision_id=decision.id, name="Honda Accord", id="option-2"),
+            Option(decision_id=decision.id, name="Mazda 6", id="option-3")
+        ]
+        mock_option_repo.get_by_decision_id.return_value = options
+        
+        criteria = [
+            Criteria(decision_id=decision.id, name="Fuel Efficiency", weight=0.6, id="criteria-1"),
+            Criteria(decision_id=decision.id, name="Safety", weight=0.4, id="criteria-2")
+        ]
+        mock_criteria_repo.get_by_decision_id.return_value = criteria
+        
+        # Scores for each option-criteria combination
+        # Option 1: (8.0 * 0.6) + (9.0 * 0.4) = 4.8 + 3.6 = 8.4
+        # Option 2: (7.0 * 0.6) + (8.0 * 0.4) = 4.2 + 3.2 = 7.4
+        # Option 3: (9.0 * 0.6) + (7.5 * 0.4) = 5.4 + 3.0 = 8.4
+        scores = [
+            Score(option_id="option-1", criteria_id="criteria-1", value=8.0, id="score-1"),
+            Score(option_id="option-1", criteria_id="criteria-2", value=9.0, id="score-2"),
+            Score(option_id="option-2", criteria_id="criteria-1", value=7.0, id="score-3"),
+            Score(option_id="option-2", criteria_id="criteria-2", value=8.0, id="score-4"),
+            Score(option_id="option-3", criteria_id="criteria-1", value=9.0, id="score-5"),
+            Score(option_id="option-3", criteria_id="criteria-2", value=7.5, id="score-6")
+        ]
+        
+        def get_scores_by_option(option_id):
+            return [s for s in scores if s.option_id == option_id]
+        
+        mock_score_repo.get_by_option_id.side_effect = get_scores_by_option
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        # Result should be a list of tuples/dicts sorted by weighted score (descending)
+        assert len(result) == 3
+        
+        # Check structure - each item should have option and weighted_score
+        assert all('option' in item and 'weighted_score' in item for item in result)
+        
+        # Check that scores are correctly calculated
+        result_dict = {item['option'].id: item['weighted_score'] for item in result}
+        assert abs(result_dict['option-1'] - 8.4) < 0.01
+        assert abs(result_dict['option-2'] - 7.4) < 0.01
+        assert abs(result_dict['option-3'] - 8.4) < 0.01
+        
+        # Check that results are sorted by weighted_score (descending)
+        weighted_scores = [item['weighted_score'] for item in result]
+        assert weighted_scores == sorted(weighted_scores, reverse=True)
+        
+        # Verify repository calls
+        mock_option_repo.get_by_decision_id.assert_called_once_with(decision.id)
+        mock_criteria_repo.get_by_decision_id.assert_called_once_with(decision.id)
+        assert mock_score_repo.get_by_option_id.call_count == 3
+    
+    def test_calculate_weighted_scores_with_no_options(self, service_setup):
+        """Test weighted score calculation when no options exist."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        
+        mock_option_repo.get_by_decision_id.return_value = []
+        criteria = [
+            Criteria(decision_id=decision.id, name="Fuel Efficiency", weight=0.6, id="criteria-1")
+        ]
+        mock_criteria_repo.get_by_decision_id.return_value = criteria
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        assert result == []
+    
+    def test_calculate_weighted_scores_with_no_criteria(self, service_setup):
+        """Test weighted score calculation when no criteria exist."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        
+        options = [
+            Option(decision_id=decision.id, name="Toyota Camry", id="option-1")
+        ]
+        mock_option_repo.get_by_decision_id.return_value = options
+        mock_criteria_repo.get_by_decision_id.return_value = []
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        # With no criteria, weighted score should be 0 or undefined
+        assert len(result) == 1
+        assert result[0]['option'].id == "option-1"
+        assert result[0]['weighted_score'] == 0.0
+    
+    def test_calculate_weighted_scores_with_missing_scores(self, service_setup):
+        """Test weighted score calculation when some scores are missing."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        mock_score_repo = service_setup['score_repo']
+        
+        options = [
+            Option(decision_id=decision.id, name="Toyota Camry", id="option-1"),
+            Option(decision_id=decision.id, name="Honda Accord", id="option-2")
+        ]
+        mock_option_repo.get_by_decision_id.return_value = options
+        
+        criteria = [
+            Criteria(decision_id=decision.id, name="Fuel Efficiency", weight=0.6, id="criteria-1"),
+            Criteria(decision_id=decision.id, name="Safety", weight=0.4, id="criteria-2")
+        ]
+        mock_criteria_repo.get_by_decision_id.return_value = criteria
+        
+        # Option 1 has all scores, Option 2 is missing score for criteria-2
+        scores = [
+            Score(option_id="option-1", criteria_id="criteria-1", value=8.0, id="score-1"),
+            Score(option_id="option-1", criteria_id="criteria-2", value=9.0, id="score-2"),
+            Score(option_id="option-2", criteria_id="criteria-1", value=7.0, id="score-3")
+        ]
+        
+        def get_scores_by_option(option_id):
+            return [s for s in scores if s.option_id == option_id]
+        
+        mock_score_repo.get_by_option_id.side_effect = get_scores_by_option
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        assert len(result) == 2
+        
+        # Option 1: (8.0 * 0.6) + (9.0 * 0.4) = 8.4
+        # Option 2: (7.0 * 0.6) + (0.0 * 0.4) = 4.2 (missing score treated as 0)
+        result_dict = {item['option'].id: item['weighted_score'] for item in result}
+        assert abs(result_dict['option-1'] - 8.4) < 0.01
+        assert abs(result_dict['option-2'] - 4.2) < 0.01
+    
+    def test_calculate_weighted_scores_with_zero_weights(self, service_setup):
+        """Test weighted score calculation with zero-weighted criteria."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        mock_score_repo = service_setup['score_repo']
+        
+        options = [
+            Option(decision_id=decision.id, name="Toyota Camry", id="option-1")
+        ]
+        mock_option_repo.get_by_decision_id.return_value = options
+        
+        criteria = [
+            Criteria(decision_id=decision.id, name="Fuel Efficiency", weight=0.0, id="criteria-1"),
+            Criteria(decision_id=decision.id, name="Safety", weight=1.0, id="criteria-2")
+        ]
+        mock_criteria_repo.get_by_decision_id.return_value = criteria
+        
+        scores = [
+            Score(option_id="option-1", criteria_id="criteria-1", value=10.0, id="score-1"),
+            Score(option_id="option-1", criteria_id="criteria-2", value=8.0, id="score-2")
+        ]
+        mock_score_repo.get_by_option_id.return_value = scores
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        # (10.0 * 0.0) + (8.0 * 1.0) = 8.0
+        assert len(result) == 1
+        assert abs(result[0]['weighted_score'] - 8.0) < 0.01
+    
+    def test_calculate_weighted_scores_with_negative_scores(self, service_setup):
+        """Test weighted score calculation with negative score values."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        mock_score_repo = service_setup['score_repo']
+        
+        options = [
+            Option(decision_id=decision.id, name="Toyota Camry", id="option-1")
+        ]
+        mock_option_repo.get_by_decision_id.return_value = options
+        
+        criteria = [
+            Criteria(decision_id=decision.id, name="Fuel Efficiency", weight=0.5, id="criteria-1"),
+            Criteria(decision_id=decision.id, name="Cost", weight=0.5, id="criteria-2")
+        ]
+        mock_criteria_repo.get_by_decision_id.return_value = criteria
+        
+        scores = [
+            Score(option_id="option-1", criteria_id="criteria-1", value=8.0, id="score-1"),
+            Score(option_id="option-1", criteria_id="criteria-2", value=-3.0, id="score-2")
+        ]
+        mock_score_repo.get_by_option_id.return_value = scores
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        # (8.0 * 0.5) + (-3.0 * 0.5) = 4.0 - 1.5 = 2.5
+        assert len(result) == 1
+        assert abs(result[0]['weighted_score'] - 2.5) < 0.01
+    
+    def test_calculate_weighted_scores_sorting_order(self, service_setup):
+        """Test that results are sorted in descending order by weighted score."""
+        # Arrange
+        service = service_setup['service']
+        decision = service_setup['decision']
+        mock_option_repo = service_setup['option_repo']
+        mock_criteria_repo = service_setup['criteria_repo']
+        mock_score_repo = service_setup['score_repo']
+        
+        options = [
+            Option(decision_id=decision.id, name="Low Score", id="option-1"),
+            Option(decision_id=decision.id, name="High Score", id="option-2"),
+            Option(decision_id=decision.id, name="Medium Score", id="option-3")
+        ]
+        mock_option_repo.get_by_decision_id.return_value = options
+        
+        criteria = [
+            Criteria(decision_id=decision.id, name="Rating", weight=1.0, id="criteria-1")
+        ]
+        mock_criteria_repo.get_by_decision_id.return_value = criteria
+        
+        scores = [
+            Score(option_id="option-1", criteria_id="criteria-1", value=3.0, id="score-1"),
+            Score(option_id="option-2", criteria_id="criteria-1", value=9.0, id="score-2"),
+            Score(option_id="option-3", criteria_id="criteria-1", value=6.0, id="score-3")
+        ]
+        
+        def get_scores_by_option(option_id):
+            return [s for s in scores if s.option_id == option_id]
+        
+        mock_score_repo.get_by_option_id.side_effect = get_scores_by_option
+        
+        # Act
+        result = service.calculate_weighted_scores()
+        
+        # Assert
+        assert len(result) == 3
+        assert result[0]['option'].name == "High Score"
+        assert result[0]['weighted_score'] == 9.0
+        assert result[1]['option'].name == "Medium Score"
+        assert result[1]['weighted_score'] == 6.0
+        assert result[2]['option'].name == "Low Score"
+        assert result[2]['weighted_score'] == 3.0
+
+
 class TestServiceErrorHandling:
     """Test cases for error handling in the service."""
     
