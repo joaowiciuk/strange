@@ -2,7 +2,7 @@
 Service layer for managing decision-making operations.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from .models import Decision, Option, Criteria, Score
 from .repositories import OptionRepository, CriteriaRepository, ScoreRepository
 
@@ -167,4 +167,42 @@ class DecisionService:
     
     def delete_score(self, score_id: str) -> bool:
         return self.score_repository.delete(score_id)
+    
+    def calculate_weighted_scores(self) -> List[Dict[str, Any]]:
+        """
+        Calculate weighted scores for all options in the decision.
+        
+        Returns a list of dictionaries, each containing:
+        - 'option': The Option object
+        - 'weighted_score': The calculated weighted score (sum of score * weight for all criteria)
+        
+        The list is sorted in descending order by weighted_score.
+        Missing scores are treated as 0.0.
+        """
+        options = self.option_repository.get_by_decision_id(self.decision.id)
+        if not options:
+            return []
+        
+        criteria = self.criteria_repository.get_by_decision_id(self.decision.id)
+        criteria_weights = {c.id: c.weight for c in criteria}
+        
+        results = []
+        for option in options:
+            weighted_score = 0.0
+            
+            if not criteria_weights:
+                results.append({'option': option, 'weighted_score': weighted_score})
+                continue
+            
+            scores = self.score_repository.get_by_option_id(option.id)
+            score_values = {s.criteria_id: s.value for s in scores}
+            
+            for criteria_id, weight in criteria_weights.items():
+                score_value = score_values.get(criteria_id, 0.0)
+                weighted_score += score_value * weight
+            
+            results.append({'option': option, 'weighted_score': weighted_score})
+        
+        results.sort(key=lambda x: x['weighted_score'], reverse=True)
+        return results
 
