@@ -1,0 +1,24 @@
+@startuml
+!NEW_C4_STYLE=1
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_AS_SKETCH()
+
+title Container diagram for strange tool
+
+Person(analyst, "Analyst", "A person interested in evaluating decision criteria systematically.")
+System_Ext(visualizer, "Visualization Software", "Third party vizualization software (e.g. PDF vizualizer).")
+
+System_Boundary(strange, "strange") {
+    Container(strange_cli, "CLI", "Python", "Command line interface for strange tool.")
+    ContainerDb(db, "Database", "SQLite", "Persists decision representation.")
+}
+
+Rel(analyst, strange_cli, "Models decisions")
+Rel(strange_cli, visualizer, "Exports to")
+Rel(strange_cli, db, "Persists in")
+
+SHOW_LEGEND()
+footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
+@enduml

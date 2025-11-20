@@ -1,0 +1,19 @@
+@startuml
+!NEW_C4_STYLE=1
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_AS_SKETCH()
+
+title System Context diagram for multiple-criteria decision analysis tool
+
+Person(analyst, "Analyst", "A person interested in evaluating decision criteria systematically.")
+System(strange, "strange", "Allows analysts to model and evaluate decisions. It can persist models internally and export results.")
+
+System_Ext(visualizer, "Visualization Software", "Third party vizualization software (e.g. PDF vizualizer).")
+
+Rel(analyst, strange, "Models decisions")
+Rel(strange, visualizer, "Exports to")
+
+SHOW_LEGEND()
+footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
+@enduml
